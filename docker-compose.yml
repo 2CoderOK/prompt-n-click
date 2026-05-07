@@ -1,0 +1,113 @@
+name: ai_game_studio
+
+services:
+  # ==========================================
+  # THE ORCHESTRATION LAYER
+  # ==========================================
+  
+  # 1. Backend: LangGraph + FastAPI API
+  api_orchestrator:
+    container_name: game_studio_api
+    build:
+      context: ./src             
+      dockerfile: backend/Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./volumes/db:/db  # SHARED DB VOLUME
+      - ./volumes/projects:/app/projects  # SHARED PROJECTS VOLUME
+      - ./volumes/workflows:/app/workflows  # SHARED WORKFLOWS VOLUME
+      - ./volumes/data:/app/data  # SHARED DATA VOLUME (opengameart_music.csv)
+      - ./src/backend:/app   # Mount code for live-reload during dev
+      - ./src/shared:/app/shared  # Mount shared code for live-reload during dev
+      - ./src/frontend/phaser:/app/static/phaser
+      - //var/run/docker.sock:/var/run/docker.sock  # Mount Docker socket
+    environment:
+      - DATABASE_URL=sqlite:////db/studio.db
+      - LLAMACPP_LLM_URL=http://game_studio_llamacpp:8090 # game_studio_llamacpp created programmatically by backend code when needed, so not defined in compose file
+      - LLAMACPP_LLM_PORT=8090
+      - LLAMACPP_LLM_MODEL_PATH_SRC=${LLM_MODELS_PATH}
+      - LLAMACPP_LLM_MODEL_PATH_DEST=/usr/local/ai/models
+      - COMFYUI_URL=http://game_studio_comfyui:8188
+      - AUDIO_URL=http://game_studio_audio:8091
+      - MUSIC_CSV_PATH=/app/data/opengameart_music.csv
+      - DOCKER_PROJECT_NAME=ai_game_studio
+      - DOCKER_NETWORK=game_studio_network
+    networks:
+      - studio_network
+
+  # 2. Frontend: Streamlit UI
+  studio_ui:
+    container_name: game_studio_ui
+    build:
+      context: ./src             
+      dockerfile: frontend/Dockerfile
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./volumes/projects:/app/projects  
+      - ./src/frontend:/app  
+      - ./src/shared:/app/shared  
+    environment:
+      - API_URL=http://game_studio_api:8000
+      - PUBLIC_API_URL=http://localhost:8000
+    depends_on:
+      - api_orchestrator
+    networks:
+      - studio_network
+
+  # ==========================================
+  # THE AI WORKERS 
+  # ==========================================
+             
+  # 3. GFX ENGINE
+  comfyui:
+    build: ./src/comfyui
+    container_name: game_studio_comfyui
+    restart: "no"
+    ports:
+      - "8188:8188"
+    volumes:
+      - ${COMFYUI_MODELS_PATH}:/app/models
+      - ./volumes/output/graphics:/app/output
+      - ./volumes/custom_nodes:/app/custom_nodes
+      - ./volumes/workflows:/app/user/default/workflows
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    networks:
+      - studio_network
+  
+  # 4. AUDIO ENGINE
+  audio_engine:
+    build: ./src/voxcpm
+    container_name: game_studio_audio
+    profiles: ["worker"]
+    restart: "no"
+    ports:
+      - "8091:8091"
+    volumes:
+      - ./volumes/projects:/app/projects  
+      - ./volumes/tts_models:/root/.cache/huggingface
+      - ./src/voxcpm:/app
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    networks:
+      - studio_network
+
+# ==========================================
+# EXPLICIT CUSTOM NETWORK
+# ==========================================
+networks:
+  studio_network:
+    driver: bridge
+    name: game_studio_network

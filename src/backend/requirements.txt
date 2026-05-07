@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+sqlmodel
+langchain
+langgraph
+langgraph-checkpoint-sqlite
+langchain-community
+docker
+rembg[cpu]
+Pillow
+numpy
+beautifulsoup4
+lxml
