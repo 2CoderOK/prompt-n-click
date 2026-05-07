@@ -13,6 +13,9 @@ Bundled with a game editor (built with Phaser.js) that allows you to fine-tune t
 
 [<img src="https://raw.githubusercontent.com/2coderok/prompt-n-click/main/assets/prompt-n-click_preview.jpg" alt="prompt-n-click pipeline youtube video" width="500"/>](https://youtu.be/7cUcXEtysLw)
 
+
+[<img src="https://raw.githubusercontent.com/2coderok/prompt-n-click/main/assets/prompt-n-click_showcase.jpg" alt="prompt-n-click showcase youtube video" width="500"/>](https://youtu.be/GrIuB6Hr0hA)
+
 ---
 
 ## Table of Contents
