@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/2coderok/prompt-n-click/src/frontend/phaser/fx/logo.png" alt="Prompt-N-Click Logo" width="500">
+  <img src="https://raw.githubusercontent.com/2coderok/prompt-n-click/main/src/frontend/phaser/fx/logo.png" alt="Prompt-N-Click Logo" width="500">
 </p>
 
 # Prompt-N-Click — Agentic Point-and-Click Game Generator
